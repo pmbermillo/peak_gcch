@@ -6,6 +6,7 @@ import Dashboard from '../Pages/Public/Dashboard.jsx'
 import AttendanceDashboard from '../Pages/Public/AttendanceDashboard.jsx'
 import AttritionDashboard from '../Pages/Public/AttritionDashboard.jsx'
 import UserManagement from '../Pages/Public/UserManagement.jsx'
+import Profile from '../Pages/Public/Profile.jsx'
 import ProtectedRoute from './ProtectedRoute.jsx'
 
 const Router = () => {
@@ -40,6 +41,13 @@ const Router = () => {
                     element={
                         <ProtectedRoute>
                             <UserManagement />
+                        </ProtectedRoute>
+                }/>
+                <Route 
+                    path="profile" 
+                    element={
+                        <ProtectedRoute>
+                            <Profile />
                         </ProtectedRoute>
                 }/>
             </Route>

@@ -17,6 +17,7 @@ import { LogoutAPI } from "../Api/Auth/AuthApi";
 import { toast } from 'react-toastify';
 
 export const Sidebar = ({open, setOpen}) =>{
+	const { user } = useUser();
 	const navigate = useNavigate();
 	// const [open, setOpen] = useState(true)          // controls sidebar open/close
 	// const [openForms, setOpenForms] = useState(false)
@@ -146,15 +147,16 @@ export const Sidebar = ({open, setOpen}) =>{
 			</nav>
 			{/* Profile */}
 			<div className="p-4 border-t border-white/20 flex items-center gap-3 bg-white/5 hover:bg-white/10 transition">
-				<img
-					src="https://i.pravatar.cc/40"
-					alt="profile"
-					className="h-9 w-9 rounded-full border-2 border-white/30"
-				/>
 				{open && (
-					<span className="text-sm font-medium text-gray-200 tracking-wide">
-					Tom Cook
-					</span>
+					<div className="flex flex-col items-start">
+						<Link
+						to="/profile"
+						className="text-sm font-medium text-gray-200 tracking-wide"
+						>
+						{user?.firstname} {user?.lastname}
+						</Link>
+						<span className="text-xs text-gray-400">{user?.permission}</span>
+					</div>
 				)}
 			</div>
 		</div>

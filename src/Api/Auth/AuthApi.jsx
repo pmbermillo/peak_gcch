@@ -48,3 +48,22 @@ export const GetMyProfile = async () => {
         throw error;
     }
 }
+
+export const ResetPassword = async (data) => {
+    const token = localStorage.getItem('auth_token');
+    
+    try {
+        return await axiosInstance.post(
+            "gcch/change-password",
+            data, 
+            {
+              headers: {
+                Authorization: `Bearer ${token}`, 
+              },
+            }
+          );
+    } catch (error) {
+        console.error("Error while changing password: ", error);
+        throw error;
+    }
+}
