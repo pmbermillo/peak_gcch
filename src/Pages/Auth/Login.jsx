@@ -10,6 +10,7 @@ import { toast } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
 import { useEffect } from "react";
 import { LoginAPI } from '../../Api/Auth/AuthApi';
+import { useUser } from './UserContext';
 
 const objValidator = { ...objFormValidator };
 
@@ -35,6 +36,7 @@ const iconMap = {
 };
 
 const Login = () => {
+    const { setUser } = useUser();
     const [objFormData, setFormData] = useState(initialData);
     const [showPassword, setShowPassword] = useState(false);
     const togglePasswordVisibility = () => setShowPassword(!showPassword);
@@ -62,7 +64,7 @@ const Login = () => {
             const data = await LoginAPI(objFormData);
             const urlToken = data.data.token;
             localStorage.setItem('auth_token', urlToken);
-            // setUser(data.data.user); // Set user data in context
+            setUser(data.data.user);
             navigate('/dashboard');
             toast.success(data.data.message || 'Login successful!');
             console.log(data.data);
