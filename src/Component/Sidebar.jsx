@@ -6,11 +6,11 @@ import {
 	XMarkIcon,
 	HomeIcon,
 	ChartBarIcon,
-	// UserGroupIcon,
+	UserGroupIcon,
 	ClipboardDocumentCheckIcon,
 	ArrowTrendingDownIcon, 
 	Cog6ToothIcon,
-	ChevronDownIcon, ArrowRightOnRectangleIcon
+	ChevronDownIcon, ArrowRightOnRectangleIcon, DocumentTextIcon, ReceiptPercentIcon, ClipboardDocumentListIcon
 	} from "@heroicons/react/24/outline"
 import { useUser } from "../Pages/Auth/UserContext";
 import { LogoutAPI } from "../Api/Auth/AuthApi";
@@ -19,10 +19,9 @@ import { toast } from 'react-toastify';
 export const Sidebar = ({open, setOpen}) =>{
 	const { user } = useUser();
 	const navigate = useNavigate();
-	// const [open, setOpen] = useState(true)          // controls sidebar open/close
-	// const [openForms, setOpenForms] = useState(false)
 	const [openSettings, setOpenSettings] = useState(false) 
-	// const [openRecords, setOpenRecords] = useState(false)
+	const [openLinks, setOpenLinks] = useState(false)
+	const [openPayroll, setOpenPayroll] = useState(false)
 
 	const handleLogout = async () => {
 		try {
@@ -65,77 +64,140 @@ export const Sidebar = ({open, setOpen}) =>{
 					{open && "Dashboard"}
 				</Link>
 				<Link
-					to="/attendance-dashboard"
+					to="/orgchart"
 					className="flex items-center gap-3 p-2 rounded-lg hover:bg-white/10 hover:text-white transition"
 				>
-					<ClipboardDocumentCheckIcon className="h-5 w-5" />
-					{open && "Attendance"}
+					<UserGroupIcon className="h-5 w-5" />
+					{open && "Organizational Chart"}
 				</Link>
-				<Link
-					to="/attrition-dashboard"
-					className="flex items-center gap-3 p-2 rounded-lg hover:bg-white/10 hover:text-white transition"
-				>
-					<ArrowTrendingDownIcon className="h-5 w-5" />
-					{open && "Attrition"}
-				</Link>
+				{["ADMIN","RTA","SCHEDULER","RA"].includes(user?.permission) && (
+					<Link
+						to="/policy-file"
+						className="flex items-center gap-3 p-2 rounded-lg hover:bg-white/10 hover:text-white transition"
+					>
+						<ClipboardDocumentCheckIcon className="h-5 w-5" />
+						{open && "Policy File"}
+					</Link>
+				)} 
+				{["ADMIN","VP","FINANCE CONTROLLER","RA", "CHIEF OF STAFF"].includes(user?.permission) && (
+					<div>
+						<button
+						onClick={() => setOpenPayroll(!openPayroll)}
+						className="flex items-center gap-3 p-2 rounded-lg hover:bg-white/10 hover:text-white transition w-full justify-between"
+						>
+							<span className="flex items-center gap-2">
+								<ReceiptPercentIcon  className="h-5 w-5" />
+								{open && "Payroll Links"}
+							</span>
+							{open && (
+								<ChevronDownIcon
+								className={`h-4 w-4 transition-transform ${
+									openPayroll ? "rotate-180" : ""
+								}`}
+								/>
+							)}
+						</button>
+						{openPayroll && open && (
+						<div className="ml-8 space-y-1">
+							<Link
+							to="/link-payroll-hours"
+							className="block p-1 text-sm hover:underline"
+							>
+								Payroll Hours
+							</Link>
+							<Link
+							to="/link-attendance-bonus"
+							className="block p-1 text-sm hover:underline"
+							>
+								Attendance Bonus
+							</Link>
+							<Link
+							to="/link-forms-file"
+							className="block p-1 text-sm hover:underline"
+							>
+								Forms
+							</Link>
+						</div>
+						)}
+					</div>
+				)} 
 				<div>
 					<button
-					onClick={() => setOpenSettings(!openSettings)}
+					onClick={() => setOpenLinks(!openLinks)}
 					className="flex items-center gap-3 p-2 rounded-lg hover:bg-white/10 hover:text-white transition w-full justify-between"
 					>
 						<span className="flex items-center gap-2">
-							<Cog6ToothIcon className="h-5 w-5" />
-							{open && "Settings"}
+							<DocumentTextIcon className="h-5 w-5" />
+							{open && "WFM Services"}
 						</span>
 						{open && (
 							<ChevronDownIcon
 							className={`h-4 w-4 transition-transform ${
-								openSettings ? "rotate-180" : ""
+								openLinks ? "rotate-180" : ""
 							}`}
 							/>
 						)}
 					</button>
-					{openSettings && open && (
+					{openLinks && open && (
 					<div className="ml-8 space-y-1">
 						<Link
-						to="/user-management"
+						to="/link-report"
 						className="block p-1 text-sm hover:underline"
 						>
-							User
-						</Link>
-						{/* <Link
-						to="/budget-source-management"
-						className="block p-1 text-sm hover:underline"
-						>
-							Budget Source
+							Reporting
 						</Link>
 						<Link
-						to="/category-management"
+						to="/link-rta"
 						className="block p-1 text-sm hover:underline"
 						>
-							Category
+							Real Time Monitoring
 						</Link>
 						<Link
-						to="/location-management"
+						to="/link-billing"
 						className="block p-1 text-sm hover:underline"
 						>
-							Location
+							Billing
 						</Link>
-						<Link
-						to="/project-management"
-						className="block p-1 text-sm hover:underline"
-						>
-							Project
-						</Link>
-						<Link
-						to="/expense-account-management"
-						className="block p-1 text-sm hover:underline"
-						>
-							Expense Account
-						</Link> */}
 					</div>
 					)}
 				</div>
+				<Link
+					to="/faq"
+					className="flex items-center gap-3 p-2 rounded-lg hover:bg-white/10 hover:text-white transition"
+				>
+					<ClipboardDocumentListIcon className="h-5 w-5" />
+					{open && "FAQs"}
+				</Link>
+				{["ADMIN"].includes(user?.permission) && (
+					<div>
+						<button
+						onClick={() => setOpenSettings(!openSettings)}
+						className="flex items-center gap-3 p-2 rounded-lg hover:bg-white/10 hover:text-white transition w-full justify-between"
+						>
+							<span className="flex items-center gap-2">
+								<Cog6ToothIcon className="h-5 w-5" />
+								{open && "Settings"}
+							</span>
+							{open && (
+								<ChevronDownIcon
+								className={`h-4 w-4 transition-transform ${
+									openSettings ? "rotate-180" : ""
+								}`}
+								/>
+							)}
+						</button>
+						{openSettings && open && (
+						<div className="ml-8 space-y-1">
+							<Link
+							to="/user-management"
+							className="block p-1 text-sm hover:underline"
+							>
+								User
+							</Link>
+						</div>
+						)}
+					</div>
+				)}
 				<br/>
 				<div onClick={handleLogout}
 					className="flex items-center gap-3 p-2 rounded-md cursor-pointer

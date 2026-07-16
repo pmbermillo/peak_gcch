@@ -19,10 +19,18 @@ const UserManagement = () => {
     });
     const permissionOptions = [
         { value: 'ADMIN', label: 'ADMIN' },
-        { value: 'REQUESTOR', label: 'REQUESTOR' },
-        { value: 'REVIEWER', label: 'REVIEWER' },
-        { value: 'APPROVER', label: 'APPROVER' },
-        { value: 'SPECIALIST', label: 'SPECIALIST' },
+        { value: 'RTA', label: 'RTA' },
+        { value: 'SCHEDULER', label: 'SCHEDULER' },
+        { value: 'RA', label: 'RA' },
+        { value: 'VIEWER', label: 'VIEWER' },
+        { value: 'TL', label: 'TL' },
+        { value: 'STL', label: 'STL' },
+        { value: 'MANAGER', label: 'MANAGER' },
+        { value: 'SENIOR MANAGER', label: 'SENIOR MANAGER' },
+        { value: 'DIRECTOR', label: 'DIRECTOR' },
+        { value: 'VP', label: 'VP' },
+        { value: 'FINANCE CONTROLLER', label: 'FINANCE CONTROLLER' },
+        { value: 'CHIEF OF STAFF', label: 'CHIEF OF STAFF' },
     ];
     const [permission, setPermission] = useState(permissionOptions);   
     const columns = [
