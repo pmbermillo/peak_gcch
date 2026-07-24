@@ -41,7 +41,7 @@ export const DeleteLinkAPI = async (id) => {
     const token = localStorage.getItem('auth_token');
     try {
         return await axiosInstance.post(
-            "/gcch/delete-link/",
+            "/gcch/delete-link",
             id,
             {
                 headers: {

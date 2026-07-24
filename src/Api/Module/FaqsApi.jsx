@@ -39,7 +39,7 @@ export const DeleteFaq = async (id) => {
     const token = localStorage.getItem('auth_token');
     try {
         return await axiosInstance.post(
-            "/gcch/delete-faq/",
+            "/gcch/delete-faq",
             id,
             {
                 headers: {

@@ -12,6 +12,8 @@ import OrgChartPage from '../Pages/Public/OrgChartPage.jsx'
 import Report from '../Pages/Public/Report.jsx'
 import Rta from '../Pages/Public/Rta.jsx'
 import Billing from '../Pages/Public/Billing.jsx'
+import Staffing from '../Pages/Public/Staffing.jsx'
+import Scheduling from '../Pages/Public/Scheduling.jsx'
 import LinkForm from '../Component/LinkForm.jsx'
 import PayrollHours from '../Pages/Public/PayrollHours.jsx'
 import AttendanceBonus from '../Pages/Public/AttendanceBonus.jsx'
@@ -93,6 +95,20 @@ const Router = () => {
                     element={
                         <ProtectedRoute>
                             <Billing />
+                        </ProtectedRoute>
+                }/>
+                <Route 
+                    path="link-staffing" 
+                    element={
+                        <ProtectedRoute>
+                            <Staffing />
+                        </ProtectedRoute>
+                }/>
+                <Route 
+                    path="link-scheduling" 
+                    element={
+                        <ProtectedRoute>
+                            <Scheduling />
                         </ProtectedRoute>
                 }/>
                 <Route 

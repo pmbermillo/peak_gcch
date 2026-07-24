@@ -158,6 +158,18 @@ export const Sidebar = ({open, setOpen}) =>{
 						>
 							Billing
 						</Link>
+						<Link
+						to="/link-staffing"
+						className="block p-1 text-sm hover:underline"
+						>
+							Staffing
+						</Link>
+						<Link
+						to="/link-scheduling"
+						className="block p-1 text-sm hover:underline"
+						>
+							Scheduling
+						</Link>
 					</div>
 					)}
 				</div>
