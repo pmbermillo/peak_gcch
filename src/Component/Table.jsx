@@ -1,6 +1,8 @@
 import React, { useState, useMemo, useEffect } from 'react'
 
-const Table = ({ title, columns, data, pageSizeOptions = [5, 10, 20], filtersManager }) => {
+const Table = ({ title, columns, data, pageSizeOptions = [5, 10, 20], filtersManager, tableClassName = "",
+    cellClassName = "",
+    headerClassName = "", }) => {
     const [filters, setFilters] = useState({});
     const [globalSearch, setGlobalSearch] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
@@ -79,8 +81,8 @@ const Table = ({ title, columns, data, pageSizeOptions = [5, 10, 20], filtersMan
             </div>
 
             <div className="overflow-y-auto max-h-[500px] shadow-md rounded-2xl">
-                <table className="min-w-max border-collapse text-sm text-center relative">
-                    <thead className="bg-gray-100">
+                <table className={`min-w-max border-collapse ${tableClassName} text-sm text-center relative`}>
+                    <thead className={`bg-gray-100 ${headerClassName}`}>
                         {/* First row: month headers */}
                         <tr>
                             {columns.map((group, groupIndex) => {
@@ -154,8 +156,8 @@ const Table = ({ title, columns, data, pageSizeOptions = [5, 10, 20], filtersMan
                                     <td
                                         key={col?.accessor || `cell-${rowIndex}-${colIndex}`}
                                         className={`px-4 py-3 text-gray-700 border border-gray-300 ${
-                                        isSticky ? "sticky bg-white z-0" : ""
-                                        }`}
+                                            isSticky ? "sticky bg-white z-0" : ""
+                                        } ${cellClassName}`}
                                         style={{
                                         minWidth: "120px",
                                         left: isSticky ? `${leftValue}px` : undefined,

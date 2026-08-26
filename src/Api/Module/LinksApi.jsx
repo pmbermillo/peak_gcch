@@ -54,3 +54,21 @@ export const DeleteLinkAPI = async (id) => {
         throw error;
     }
 }
+
+export const GetFoldersAPI = async (data) => {
+    const token = localStorage.getItem('auth_token');
+    try {
+        return await axiosInstance.post(
+            "/gcch/get-folders",
+            data,
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`, // Send token in the Authorization header
+                },
+            }
+        );
+    } catch (error) {
+        console.error("Error while fetching folders: ", error);
+        throw error;
+    }
+}
