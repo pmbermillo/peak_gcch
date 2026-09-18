@@ -20,6 +20,8 @@ import AttendanceBonus from '../Pages/Public/AttendanceBonus.jsx'
 import Forms from '../Pages/Public/Forms.jsx'
 import PolicyFile from '../Pages/Public/PolicyFile.jsx'
 import Faq from '../Pages/Public/Faq.jsx'
+import LinkOthers from '../Pages/Public/LinkOthers.jsx'
+import Notification from '../Pages/Public/Notification.jsx'
 
 const Router = () => {
   return (
@@ -144,6 +146,20 @@ const Router = () => {
                     element={
                         <ProtectedRoute>
                             <Faq />
+                        </ProtectedRoute>
+                }/>
+                <Route 
+                    path="other-links" 
+                    element={
+                        <ProtectedRoute>
+                            <LinkOthers />
+                        </ProtectedRoute>
+                }/>
+                <Route 
+                    path="notification-management" 
+                    element={
+                        <ProtectedRoute>
+                            <Notification />
                         </ProtectedRoute>
                 }/>
             </Route>

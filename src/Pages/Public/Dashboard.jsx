@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { GetNotifications } from '../../Api/Module/DashboardApi.jsx';
 
 const Dashboard = () => {
 
@@ -42,6 +43,7 @@ const Dashboard = () => {
     ];
 
     const [currentTime, setCurrentTime] = useState(new Date());
+    const [notifications, setNotifications] = useState([]);
 
     useEffect(() => {
         const timer = setInterval(() => {
@@ -49,6 +51,43 @@ const Dashboard = () => {
         }, 1000);
 
         return () => clearInterval(timer);
+    }, []);
+    
+    const fetchNotifications = async () => {
+    try {
+        const response = await GetNotifications();
+
+        console.log('FULL RESPONSE:', response);
+        console.log('RESPONSE DATA:', response.data);
+
+        const data = Array.isArray(response.data?.[0])
+            ? response.data[0]
+            : [];
+
+        console.log('NOTIFICATIONS:', data);
+
+        setNotifications(data);
+
+    } catch (error) {
+        console.error('Error fetching notification data:', error);
+        setNotifications([]);
+    }
+};
+
+    const alerts = notifications.filter(
+        notification => notification.type === 'alert'
+    );
+
+    const announcements = notifications.filter(
+        notification => notification.type === 'announcement'
+    );
+
+    const news = notifications.filter(
+        notification => notification.type === 'news'
+    );
+
+    useEffect(() => {
+        fetchNotifications();
     }, []);
 
     const formatTime = (timezone) => {
@@ -74,56 +113,139 @@ const Dashboard = () => {
     return (
         <div className="min-h-screen bg-gray-50 px-4 py-6">
             <div className="w-full mb-6">
-                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                    <div>
+                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 mb-6">
+
+                    {/* Welcome */}
+                    <div className="flex-1">
                         <p className="text-sm text-gray-500 mb-1">
                             Welcome back
                         </p>
+
                         <h1 className="text-2xl md:text-3xl font-bold text-gray-800">
                             Good day! 👋
                         </h1>
+
                         <p className="text-sm text-gray-500 mt-1">
                             Here's what's happening in your organization today.
                         </p>
                     </div>
-                    {/* Notification */}
-                    {/* <button
-                        type="button"
-                        className="
-                            relative
-                            w-11
-                            h-11
-                            flex
-                            items-center
-                            justify-center
-                            bg-white
-                            border
-                            border-gray-200
-                            rounded-xl
-                            shadow-sm
-                            hover:bg-gray-50
-                            transition
-                        "
-                    >
-                        <span className="text-xl">
-                            🔔
-                        </span>
-                        <span
-                            className="
-                                absolute
-                                top-2
-                                right-2
-                                w-2
-                                h-2
-                                bg-red-500
-                                rounded-full
-                            "
-                        />
-                    </button> */}
+
+                    {/* Alerts */}
+                    {alerts.slice(0, 3).map((alert) => {
+                        const links = alert.links
+                            ? alert.links
+                                .split(',')
+                                .map(link => link.trim())
+                                .filter(Boolean)
+                            : [];
+
+                        return (
+                            <div
+                                key={alert.id}
+                                className="
+                                    relative
+                                    flex
+                                    items-start
+                                    gap-3
+                                    px-3
+                                    py-3
+                                    pl-4
+                                    bg-red-50/50
+                                    border
+                                    border-red-100
+                                    rounded-xl
+                                    hover:bg-red-50
+                                    transition
+                                    overflow-hidden
+                                "
+                            >
+                                {/* Red accent line */}
+                                <div className="absolute left-0 top-0 bottom-0 w-1 bg-red-500" />
+
+                                <span className="text-sm flex-shrink-0 mt-0.5">
+                                    🔔
+                                </span>
+
+                                <div className="flex-1 min-w-0">
+
+                                    {/* Title */}
+                                    <p className="text-xs font-semibold text-gray-700">
+                                        {alert.title || 'Untitled Alert'}
+                                    </p>
+
+                                    {/* Content */}
+                                    {alert.content && (
+                                        <p className="text-[11px] text-gray-500 mt-0.5">
+                                            {alert.content}
+                                        </p>
+                                    )}
+
+                                    {/* Links */}
+                                    {links.length > 0 && (
+                                        <div className="flex flex-wrap gap-2 mt-2">
+                                            {links.map((link, index) => (
+                                                <a
+                                                    key={index}
+                                                    href={link}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="
+                                                        inline-flex
+                                                        items-center
+                                                        gap-1
+                                                        px-2
+                                                        py-1
+                                                        text-[10px]
+                                                        font-semibold
+                                                        text-blue-600
+                                                        bg-blue-50
+                                                        border
+                                                        border-blue-100
+                                                        rounded-lg
+                                                        hover:bg-blue-100
+                                                        hover:text-blue-700
+                                                        transition
+                                                    "
+                                                    onClick={(e) => e.stopPropagation()}
+                                                >
+                                                    🔗
+                                                    {links.length > 1
+                                                        ? `Link ${index + 1}`
+                                                        : 'Open Link'}
+                                                </a>
+                                            ))}
+                                        </div>
+                                    )}
+
+                                </div>
+
+                                {/* Priority */}
+                                {alert.priority && (
+                                    <span
+                                        className="
+                                            flex-shrink-0
+                                            px-2
+                                            py-0.5
+                                            text-[9px]
+                                            font-semibold
+                                            text-red-600
+                                            bg-red-100
+                                            rounded-full
+                                            capitalize
+                                        "
+                                    >
+                                        {alert.priority}
+                                    </span>
+                                )}
+                            </div>
+                        );
+                    })}
+
                 </div>
             </div>
 
             <div className="w-full space-y-6">
+                
                 <div
                     className="
                         bg-white

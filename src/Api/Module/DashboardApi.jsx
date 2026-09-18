@@ -53,3 +53,38 @@ export const GetManagers = async (data) => {
         throw error;
     }
 }
+
+export const PostNotification = async (data) => {
+    const token = localStorage.getItem('auth_token');
+    try {
+        return await axiosInstance.post(
+            "/gcch/post-notification",
+            data,
+            { 
+              headers: {
+                Authorization: `Bearer ${token}`, // Send token in the Authorization header
+              },
+            }
+          );
+    } catch (error) {
+        console.error("Error while posting notification: ", error);
+        throw error;
+    }
+}
+
+export const GetNotifications = async () => {
+    const token = localStorage.getItem('auth_token');
+    try {
+        return await axiosInstance.get(
+            "/gcch/get-notifications",
+            {
+              headers: {
+                Authorization: `Bearer ${token}`, // Send token in the Authorization header
+              },
+            }
+          );
+    } catch (error) {
+        console.error("Error while fetching notifications: ", error);
+        throw error;
+    }
+}

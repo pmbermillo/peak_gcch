@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useUser } from "../Pages/Auth/UserContext";
 import {
     FolderIcon,
     ChevronRightIcon,
@@ -17,7 +18,7 @@ const FolderNode = ({
 }) => {
 
     const [expanded, setExpanded] = useState(true);
-
+    const { user } = useUser();
     return (
         <div>
             <div
@@ -57,26 +58,28 @@ const FolderNode = ({
                     </span>
                 </div>
                 {/* RIGHT */}
-                <div className="hidden gap-1 group-hover:flex">
-                    <button
-                        onClick={() => onAddFolder(folder)}
-                        className="rounded p-1 hover:bg-green-100"
-                    >
-                        <PlusIcon className="h-4 w-4 text-green-600"/>
-                    </button>
-                    <button
-                        onClick={() => onEditFolder(folder)}
-                        className="rounded p-1 hover:bg-blue-100"
-                    >
-                        <PencilIcon className="h-4 w-4 text-blue-600"/>
-                    </button>
-                    <button
-                        onClick={() => onDeleteFolder(folder)}
-                        className="rounded p-1 hover:bg-red-100"
-                    >
-                        <TrashIcon className="h-4 w-4 text-red-600"/>
-                    </button>
-                </div>
+                {["RTA", "SCHEDULER", "RA", "ADMIN"].includes(user?.permission) && (
+                    <div className="hidden gap-1 group-hover:flex">
+                        <button
+                            onClick={() => onAddFolder(folder)}
+                            className="rounded p-1 hover:bg-green-100"
+                        >
+                            <PlusIcon className="h-4 w-4 text-green-600"/>
+                        </button>
+                        <button
+                            onClick={() => onEditFolder(folder)}
+                            className="rounded p-1 hover:bg-blue-100"
+                        >
+                            <PencilIcon className="h-4 w-4 text-blue-600"/>
+                        </button>
+                        <button
+                            onClick={() => onDeleteFolder(folder)}
+                            className="rounded p-1 hover:bg-red-100"
+                        >
+                            <TrashIcon className="h-4 w-4 text-red-600"/>
+                        </button>
+                    </div>
+                )}
             </div>
             {expanded && folder.children.map(child => (
                 <FolderNode
@@ -112,14 +115,14 @@ const FolderTree = ({
 
     const tree = buildTree(folders);
     return (
-        <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
+        <div className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
 
             <div className="border-b px-5 py-3">
                 <h2 className="text-lg font-semibold">
                     Folders
                 </h2>
             </div>
-            <div className="p-3">
+            <div className="p-3 max-h-[500px] overflow-y-auto">
                 {folders.length === 0 ? (
                     <div className="text-sm text-gray-500">
                         No folders found.

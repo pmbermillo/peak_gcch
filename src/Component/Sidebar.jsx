@@ -170,6 +170,12 @@ export const Sidebar = ({open, setOpen}) =>{
 						>
 							Scheduling
 						</Link>
+						<Link
+						to="/other-links"
+						className="block p-1 text-sm hover:underline"
+						>
+							Other Links
+						</Link>
 					</div>
 					)}
 				</div>
@@ -205,6 +211,12 @@ export const Sidebar = ({open, setOpen}) =>{
 							className="block p-1 text-sm hover:underline"
 							>
 								User
+							</Link>
+							<Link
+							to="/notification-management"
+							className="block p-1 text-sm hover:underline"
+							>
+								Notification
 							</Link>
 						</div>
 						)}

@@ -290,7 +290,8 @@ const AttendanceBonus = () => {
                                 ? `📁 ${selectedFolder.title}`
                                 : "Select a folder"}
                         </h2>
-                        {selectedFolder && (
+                       {["RTA", "SCHEDULER", "RA", "ADMIN"].includes(user?.permission) &&
+                        selectedFolder && (
                             <button
                                 className="rounded-lg bg-black px-4 py-2 text-white"
                                 onClick={() => setShowLinkForm(true)}
