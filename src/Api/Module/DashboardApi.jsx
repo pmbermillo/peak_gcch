@@ -72,6 +72,23 @@ export const PostNotification = async (data) => {
     }
 }
 
+export const GetNotifications = async () => {
+    const token = localStorage.getItem('auth_token');
+    try {
+        return await axiosInstance.get(
+            "/gcch/get-notifications",
+            {
+              headers: {
+                Authorization: `Bearer ${token}`, // Send token in the Authorization header
+              },
+            }
+          );
+    } catch (error) {
+        console.error("Error while fetching notifications: ", error);
+        throw error;
+    }
+}
+
 export const GetAllNotifications = async () => {
     const token = localStorage.getItem('auth_token');
     try {
