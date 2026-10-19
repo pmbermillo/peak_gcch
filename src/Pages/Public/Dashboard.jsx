@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { GetNotifications } from '../../Api/Module/DashboardApi.jsx';
+import { GetNotifications, submitSuggestion } from '../../Api/Module/DashboardApi.jsx';
+import { Link } from "react-router-dom"
+import { toast } from "react-toastify";
 
 const Dashboard = () => {
 
@@ -44,6 +46,8 @@ const Dashboard = () => {
 
     const [currentTime, setCurrentTime] = useState(new Date());
     const [notifications, setNotifications] = useState([]);
+    const [showSuggestionBox, setShowSuggestionBox] = useState(false);
+    const [message, setMessage] = useState('');
 
     useEffect(() => {
         const timer = setInterval(() => {
@@ -54,25 +58,31 @@ const Dashboard = () => {
     }, []);
     
     const fetchNotifications = async () => {
-    try {
-        const response = await GetNotifications();
+        try {
+            const response = await GetNotifications();
 
-        console.log('FULL RESPONSE:', response);
-        console.log('RESPONSE DATA:', response.data);
+            console.log('FULL RESPONSE:', response);
+            console.log('RESPONSE DATA:', response.data);
 
-        const data = Array.isArray(response.data?.[0])
-            ? response.data[0]
-            : [];
+            const data = Array.isArray(response.data?.[0])
+                ? response.data[0]
+                : [];
 
-        console.log('NOTIFICATIONS:', data);
+            console.log('NOTIFICATIONS:', data);
 
-        setNotifications(data);
+            setNotifications(data);
 
-    } catch (error) {
-        console.error('Error fetching notification data:', error);
-        setNotifications([]);
-    }
-};
+        } catch (error) {
+            console.error('Error fetching notification data:', error);
+            setNotifications([]);
+        }
+    };
+
+    const [closedAnnouncementIds, setClosedAnnouncementIds] = useState(() => {
+        const saved = sessionStorage.getItem('closed_announcement_ids');
+
+        return saved ? JSON.parse(saved) : [];
+    });
 
     const alerts = notifications.filter(
         notification => notification.type === 'alert'
@@ -85,6 +95,32 @@ const Dashboard = () => {
     const news = notifications.filter(
         notification => notification.type === 'news'
     );
+
+    const activeAnnouncement = [...announcements]
+    .sort(
+        (a, b) =>
+            new Date(b.publish_at || b.created_at) -
+            new Date(a.publish_at || a.created_at)
+    )
+    .find(
+        announcement => !closedAnnouncementIds.includes(announcement.id)
+    );
+
+    const closeAnnouncement = () => {
+        if (!activeAnnouncement) return;
+
+        const updatedClosedIds = [
+            ...closedAnnouncementIds,
+            activeAnnouncement.id
+        ];
+
+        setClosedAnnouncementIds(updatedClosedIds);
+
+        sessionStorage.setItem(
+            'closed_announcement_ids',
+            JSON.stringify(updatedClosedIds)
+        );
+    };
 
     useEffect(() => {
         fetchNotifications();
@@ -110,8 +146,214 @@ const Dashboard = () => {
         }).format(currentTime);
     };
 
+    const handleSubmitSuggestion = async (e) => {
+        e.preventDefault();
+
+        try {
+            const response = await submitSuggestion({ suggestion: message });
+            console.log(response);
+            toast.success(response.data.message);
+            setMessage(''); // Clear the message after successful submission
+        } catch (error) {
+            console.log(error);
+            toast.error(
+                error.response?.data?.errors?.suggestion?.[0] ??
+                error.response?.data?.error ??
+                'Failed to submit suggestion.'
+            );
+            return;
+        }
+    };
+
     return (
         <div className="min-h-screen bg-gray-50 px-4 py-6">
+            {/* =====================================================
+                ANNOUNCEMENT MODAL
+            ====================================================== */}
+            {activeAnnouncement && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+                    
+                    {/* Overlay */}
+                    <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+
+                    {/* Modal */}
+                    <div
+                        className="
+                            relative
+                            w-full
+                            max-w-lg
+                            bg-white
+                            rounded-2xl
+                            shadow-2xl
+                            overflow-hidden
+                        "
+                    >
+                        {/* Header */}
+                        <div className="px-6 py-5 border-b border-gray-100">
+                            <div className="flex items-start justify-between gap-4">
+
+                                <div className="flex items-start gap-3">
+                                    <div
+                                        className="
+                                            w-11
+                                            h-11
+                                            flex
+                                            items-center
+                                            justify-center
+                                            bg-blue-50
+                                            rounded-xl
+                                            text-xl
+                                            flex-shrink-0
+                                        "
+                                    >
+                                        📢
+                                    </div>
+
+                                    <div>
+                                        <p className="text-[10px] font-bold uppercase tracking-wide text-blue-600 mb-1">
+                                            Announcement
+                                        </p>
+
+                                        <h2 className="text-lg font-bold text-gray-800">
+                                            {activeAnnouncement.title || 'Announcement'}
+                                        </h2>
+                                    </div>
+                                </div>
+
+                                {/* Close button */}
+                                <button
+                                    type="button"
+                                    onClick={closeAnnouncement}
+                                    className="
+                                        flex-shrink-0
+                                        w-8
+                                        h-8
+                                        flex
+                                        items-center
+                                        justify-center
+                                        rounded-lg
+                                        text-gray-400
+                                        hover:text-gray-600
+                                        hover:bg-gray-100
+                                        transition
+                                    "
+                                    aria-label="Close announcement"
+                                >
+                                    ✕
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Content */}
+                        <div className="px-6 py-5">
+
+                            {activeAnnouncement.priority && (
+                                <span
+                                    className={`
+                                        inline-flex
+                                        px-2.5
+                                        py-1
+                                        text-[10px]
+                                        font-bold
+                                        rounded-full
+                                        uppercase
+                                        mb-4
+                                        ${
+                                            activeAnnouncement.priority === 'urgent'
+                                                ? 'text-red-600 bg-red-50'
+                                                : activeAnnouncement.priority === 'high'
+                                                    ? 'text-orange-600 bg-orange-50'
+                                                    : 'text-blue-600 bg-blue-50'
+                                        }
+                                    `}
+                                >
+                                    {activeAnnouncement.priority}
+                                </span>
+                            )}
+
+                            {activeAnnouncement.content && (
+                                <div className="text-sm text-gray-600 leading-relaxed whitespace-pre-line">
+                                    {activeAnnouncement.content}
+                                </div>
+                            )}
+
+                            {/* Links */}
+                            {activeAnnouncement.links && (
+                                <div className="flex flex-wrap gap-2 mt-5">
+                                    {activeAnnouncement.links
+                                        .split(',')
+                                        .map(link => link.trim())
+                                        .filter(Boolean)
+                                        .map((link, index) => (
+                                            <a
+                                                key={index}
+                                                href={link}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="
+                                                    inline-flex
+                                                    items-center
+                                                    gap-1.5
+                                                    px-3
+                                                    py-2
+                                                    text-xs
+                                                    font-semibold
+                                                    text-blue-600
+                                                    bg-blue-50
+                                                    border
+                                                    border-blue-100
+                                                    rounded-lg
+                                                    hover:bg-blue-100
+                                                    hover:text-blue-700
+                                                    transition
+                                                "
+                                            >
+                                                🔗
+                                                {activeAnnouncement.links
+                                                    .split(',')
+                                                    .filter(Boolean).length > 1
+                                                    ? `Link ${index + 1}`
+                                                    : 'Open Link'}
+                                            </a>
+                                        ))}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Footer */}
+                        <div
+                            className="
+                                px-6
+                                py-4
+                                bg-gray-50
+                                border-t
+                                border-gray-100
+                                flex
+                                justify-end
+                            "
+                        >
+                            <button
+                                type="button"
+                                onClick={closeAnnouncement}
+                                className="
+                                    px-4
+                                    py-2
+                                    text-sm
+                                    font-semibold
+                                    text-white
+                                    bg-blue-600
+                                    rounded-lg
+                                    hover:bg-blue-700
+                                    transition
+                                "
+                            >
+                                Close
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             <div className="w-full mb-6">
                 <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 mb-6">
 
@@ -245,7 +487,6 @@ const Dashboard = () => {
             </div>
 
             <div className="w-full space-y-6">
-                
                 <div
                     className="
                         bg-white
@@ -309,12 +550,18 @@ const Dashboard = () => {
                     </div>
                 </div>
 
-                {/* =====================================================
-                    ALERTS + ANNOUNCEMENTS
+               {/* =====================================================
+                    NEWS FEED
                 ====================================================== */}
-                {/* <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+                    {/* =====================================================
+                        NEWS FEED
+                    ====================================================== */}
                     <div
                         className="
+                            w-full
                             bg-white
                             rounded-2xl
                             border
@@ -323,439 +570,295 @@ const Dashboard = () => {
                             overflow-hidden
                         "
                     >
-                        <div className="p-5 border-b border-gray-100">
 
+                        {/* Header */}
+                        <div className="px-5 py-4 border-b border-gray-100 bg-gradient-to-r from-indigo-50 to-white">
                             <div className="flex items-center justify-between">
 
                                 <div className="flex items-center gap-3">
 
                                     <div
                                         className="
-                                            w-10
-                                            h-10
+                                            w-11
+                                            h-11
                                             flex
                                             items-center
                                             justify-center
-                                            bg-red-50
+                                            bg-indigo-100
                                             rounded-xl
+                                            text-xl
                                         "
                                     >
-                                        🔔
+                                        📰
                                     </div>
+
                                     <div>
+                                        <div className="flex items-center gap-2">
 
-                                        <h2 className="font-bold text-gray-800">
-                                            My Alerts
-                                        </h2>
+                                            <h2 className="text-base font-bold text-gray-800">
+                                                News Feed
+                                            </h2>
 
-                                        <p className="text-xs text-gray-500">
-                                            Items that need your attention
+                                            <span
+                                                className="
+                                                    px-2
+                                                    py-0.5
+                                                    text-[9px]
+                                                    font-bold
+                                                    uppercase
+                                                    tracking-wide
+                                                    text-indigo-600
+                                                    bg-indigo-100
+                                                    rounded-full
+                                                "
+                                            >
+                                                Latest
+                                            </span>
+
+                                        </div>
+
+                                        <p className="text-xs text-gray-500 mt-0.5">
+                                            Latest news and updates
                                         </p>
-
                                     </div>
+
                                 </div>
+
+                                {/* News count */}
                                 <span
                                     className="
-                                        px-2.5
-                                        py-1
+                                        min-w-[28px]
+                                        h-7
+                                        px-2
+                                        flex
+                                        items-center
+                                        justify-center
                                         text-xs
                                         font-bold
-                                        text-red-600
-                                        bg-red-50
+                                        text-indigo-600
+                                        bg-indigo-50
                                         rounded-full
                                     "
                                 >
-                                    3
+                                    {news.length}
                                 </span>
+
                             </div>
                         </div>
-                        <div className="divide-y divide-gray-100">
 
-                            <div className="p-4 flex gap-3 hover:bg-gray-50 transition cursor-pointer">
+                        {/* News Items */}
+                        <div className="h-[400px] overflow-y-auto">
 
-                                <span className="text-lg">
-                                    ⚠️
-                                </span>
+                            {news
+                                .slice()
+                                .sort(
+                                    (a, b) =>
+                                        new Date(b.publish_at || b.created_at) -
+                                        new Date(a.publish_at || a.created_at)
+                                )
+                                .slice(0, 10)
+                                .map((item, index) => {
 
-                                <div className="flex-1">
+                                    const links = item.links
+                                        ? item.links
+                                            .split(',')
+                                            .map(link => link.trim())
+                                            .filter(Boolean)
+                                        : [];
 
-                                    <p className="text-sm font-semibold text-gray-700">
-                                        Accreditation expires in 5 days
-                                    </p>
+                                    return (
+                                        <div
+                                            key={item.id}
+                                            className="
+                                                group
+                                                px-5
+                                                py-4
+                                                border-b
+                                                border-gray-100
+                                                hover:bg-indigo-50/40
+                                                transition
+                                            "
+                                        >
+                                            <div className="flex gap-3">
 
-                                    <p className="text-xs text-gray-400 mt-1">
-                                        Please renew your accreditation.
-                                    </p>
+                                                <div className="flex-shrink-0">
+                                                    <div
+                                                        className="
+                                                            w-9
+                                                            h-9
+                                                            flex
+                                                            items-center
+                                                            justify-center
+                                                            bg-gray-50
+                                                            border
+                                                            border-gray-100
+                                                            rounded-lg
+                                                            text-sm
+                                                            group-hover:bg-white
+                                                            group-hover:border-indigo-100
+                                                            transition
+                                                        "
+                                                    >
+                                                        {index === 0 ? '✨' : '📰'}
+                                                    </div>
+                                                </div>
 
-                                </div>
+                                                <div className="flex-1 min-w-0">
 
-                            </div>
+                                                    <h3
+                                                        className="
+                                                            text-sm
+                                                            font-semibold
+                                                            text-gray-800
+                                                            group-hover:text-indigo-700
+                                                            transition
+                                                        "
+                                                    >
+                                                        {item.title || 'Untitled News'}
+                                                    </h3>
 
+                                                    {item.content && (
+                                                        <p
+                                                            className="
+                                                                text-xs
+                                                                text-gray-500
+                                                                mt-1.5
+                                                                leading-relaxed
+                                                            "
+                                                        >
+                                                            {item.content}
+                                                        </p>
+                                                    )}
 
-                            <div className="p-4 flex gap-3 hover:bg-gray-50 transition cursor-pointer">
+                                                    <div className="flex flex-wrap items-center gap-3 mt-3">
 
-                                <span className="text-lg">
-                                    📄
-                                </span>
+                                                        {(item.publish_at || item.created_at) && (
+                                                            <span className="text-[10px] text-gray-400">
+                                                                🕒{' '}
+                                                                {new Date(
+                                                                    item.publish_at || item.created_at
+                                                                ).toLocaleDateString(
+                                                                    undefined,
+                                                                    {
+                                                                        year: 'numeric',
+                                                                        month: 'short',
+                                                                        day: 'numeric'
+                                                                    }
+                                                                )}
+                                                            </span>
+                                                        )}
 
-                                <div className="flex-1">
+                                                        {item.priority && (
+                                                            <span
+                                                                className="
+                                                                    px-2
+                                                                    py-0.5
+                                                                    text-[9px]
+                                                                    font-semibold
+                                                                    text-gray-500
+                                                                    bg-gray-100
+                                                                    rounded-full
+                                                                    capitalize
+                                                                "
+                                                            >
+                                                                {item.priority}
+                                                            </span>
+                                                        )}
 
-                                    <p className="text-sm font-semibold text-gray-700">
-                                        Document requires your approval
-                                    </p>
+                                                    </div>
 
-                                    <p className="text-xs text-gray-400 mt-1">
-                                        Submitted 1 hour ago.
-                                    </p>
+                                                    {links.length > 0 && (
+                                                        <div className="flex flex-wrap gap-2 mt-3">
 
-                                </div>
+                                                            {links.map((link, linkIndex) => (
+                                                                <a
+                                                                    key={linkIndex}
+                                                                    href={link}
+                                                                    target="_blank"
+                                                                    rel="noopener noreferrer"
+                                                                    className="
+                                                                        inline-flex
+                                                                        items-center
+                                                                        gap-1.5
+                                                                        px-3
+                                                                        py-1.5
+                                                                        text-[10px]
+                                                                        font-semibold
+                                                                        text-indigo-600
+                                                                        bg-white
+                                                                        border
+                                                                        border-indigo-200
+                                                                        rounded-lg
+                                                                        hover:bg-indigo-600
+                                                                        hover:text-white
+                                                                        hover:border-indigo-600
+                                                                        transition
+                                                                    "
+                                                                    onClick={(e) =>
+                                                                        e.stopPropagation()
+                                                                    }
+                                                                >
+                                                                    🔗
+                                                                    {links.length > 1
+                                                                        ? `Link ${linkIndex + 1}`
+                                                                        : 'Open Link'}
+                                                                </a>
+                                                            ))}
 
-                            </div>
+                                                        </div>
+                                                    )}
 
+                                                </div>
 
-                            <div className="p-4 flex gap-3 hover:bg-gray-50 transition cursor-pointer">
-
-                                <span className="text-lg">
-                                    📝
-                                </span>
-
-                                <div className="flex-1">
-
-                                    <p className="text-sm font-semibold text-gray-700">
-                                        You have 2 pending requests
-                                    </p>
-
-                                    <p className="text-xs text-gray-400 mt-1">
-                                        Review your pending requests.
-                                    </p>
-
-                                </div>
-
-                            </div>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
 
                         </div>
 
-
-                        <div className="p-4">
-
-                            <button
-                                type="button"
+                        {/* Footer */}
+                        {news.length > 10 && (
+                            <div
                                 className="
-                                    text-sm
-                                    font-semibold
-                                    text-blue-600
-                                    hover:text-blue-700
+                                    px-5
+                                    py-3
+                                    bg-gray-50
+                                    border-t
+                                    border-gray-100
                                 "
                             >
-                                View all alerts →
-                            </button>
-
-                        </div>
+                                <p className="text-[10px] text-gray-400 text-center">
+                                    Showing the 10 most recent news updates
+                                </p>
+                            </div>
+                        )}
 
                     </div>
 
+                    {/* =====================================================
+                    VIEW ALL NOTIFICATIONS
+                    ====================================================== */}
+
+                    <div className="w-full space-y-4">
+
+                    {/* View All Notifications */}
                     <div
                         className="
+                            w-full
                             bg-white
                             rounded-2xl
                             border
                             border-gray-200
-                            shadow-sm
-                            overflow-hidden
-                        "
-                    >
-
-                        <div className="p-5 border-b border-gray-100">
-
-                            <div className="flex items-center gap-3">
-
-                                <div
-                                    className="
-                                        w-10
-                                        h-10
-                                        flex
-                                        items-center
-                                        justify-center
-                                        bg-blue-50
-                                        rounded-xl
-                                    "
-                                >
-                                    📢
-                                </div>
-
-                                <div>
-
-                                    <h2 className="font-bold text-gray-800">
-                                        Announcements
-                                    </h2>
-
-                                    <p className="text-xs text-gray-500">
-                                        Important organization updates
-                                    </p>
-
-                                </div>
-
-                            </div>
-
-                        </div>
-
-
-                        <div className="divide-y divide-gray-100">
-
-                            <div className="p-4 hover:bg-gray-50 transition cursor-pointer">
-
-                                <div className="flex items-start gap-3">
-
-                                    <span className="px-2 py-1 text-[10px] font-bold text-red-600 bg-red-50 rounded-full">
-                                        URGENT
-                                    </span>
-
-                                    <div className="flex-1">
-
-                                        <h3 className="text-sm font-semibold text-gray-700">
-                                            System Maintenance
-                                        </h3>
-
-                                        <p className="text-xs text-gray-400 mt-1">
-                                            Scheduled August 20, 10:00 PM.
-                                        </p>
-
-                                    </div>
-
-                                </div>
-
-                            </div>
-
-
-                            <div className="p-4 hover:bg-gray-50 transition cursor-pointer">
-
-                                <div className="flex items-start gap-3">
-
-                                    <span className="px-2 py-1 text-[10px] font-bold text-yellow-600 bg-yellow-50 rounded-full">
-                                        IMPORTANT
-                                    </span>
-
-                                    <div className="flex-1">
-
-                                        <h3 className="text-sm font-semibold text-gray-700">
-                                            New HR Policy
-                                        </h3>
-
-                                        <p className="text-xs text-gray-400 mt-1">
-                                            Effective August 25.
-                                        </p>
-
-                                    </div>
-
-                                </div>
-
-                            </div>
-
-
-                            <div className="p-4 hover:bg-gray-50 transition cursor-pointer">
-
-                                <div className="flex items-start gap-3">
-
-                                    <span className="px-2 py-1 text-[10px] font-bold text-blue-600 bg-blue-50 rounded-full">
-                                        GENERAL
-                                    </span>
-
-                                    <div className="flex-1">
-
-                                        <h3 className="text-sm font-semibold text-gray-700">
-                                            Office Holiday Schedule
-                                        </h3>
-
-                                        <p className="text-xs text-gray-400 mt-1">
-                                            Posted August 15.
-                                        </p>
-
-                                    </div>
-
-                                </div>
-
-                            </div>
-
-                        </div>
-
-
-                        <div className="p-4">
-
-                            <button
-                                type="button"
-                                className="
-                                    text-sm
-                                    font-semibold
-                                    text-blue-600
-                                    hover:text-blue-700
-                                "
-                            >
-                                View all announcements →
-                            </button>
-
-                        </div>
-
-                    </div>
-
-                </div> */}
-
-                {/* =====================================================
-                    NEWS + SUGGESTION
-                ====================================================== */}
-                {/* <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <div
-                        className="
-                            bg-white
-                            rounded-2xl
-                            border
-                            border-gray-200
-                            shadow-sm
-                            overflow-hidden
-                        "
-                    >
-                        <div className="p-5 border-b border-gray-100">
-                            <div className="flex items-center gap-3">
-                                <div
-                                    className="
-                                        w-10
-                                        h-10
-                                        flex
-                                        items-center
-                                        justify-center
-                                        bg-indigo-50
-                                        rounded-xl
-                                    "
-                                >
-                                    📰
-                                </div>
-                                <div>
-                                    <h2 className="font-bold text-gray-800">
-                                        News Feed
-                                    </h2>
-                                    <p className="text-xs text-gray-500">
-                                        Latest news and updates
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                        <div className="divide-y divide-gray-100">
-                            <div className="p-4 hover:bg-gray-50 transition cursor-pointer">
-                                <div className="flex gap-4">
-                                    <div
-                                        className="
-                                            w-12
-                                            h-12
-                                            flex-shrink-0
-                                            flex
-                                            items-center
-                                            justify-center
-                                            bg-blue-50
-                                            rounded-xl
-                                            text-xl
-                                        "
-                                    >
-                                        🎉
-                                    </div>
-                                    <div>
-                                        <h3 className="text-sm font-semibold text-gray-700">
-                                            New Employee Benefits Program
-                                        </h3>
-                                        <p className="text-xs text-gray-400 mt-1">
-                                            Learn about the new employee benefits program.
-                                        </p>
-                                        <p className="text-[11px] text-gray-400 mt-2">
-                                            2 hours ago
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="p-4 hover:bg-gray-50 transition cursor-pointer">
-                                <div className="flex gap-4">
-                                    <div
-                                        className="
-                                            w-12
-                                            h-12
-                                            flex-shrink-0
-                                            flex
-                                            items-center
-                                            justify-center
-                                            bg-purple-50
-                                            rounded-xl
-                                            text-xl
-                                        "
-                                    >
-                                        📚
-                                    </div>
-                                    <div>
-                                        <h3 className="text-sm font-semibold text-gray-700">
-                                            New Training Schedule
-                                        </h3>
-                                        <p className="text-xs text-gray-400 mt-1">
-                                            August training sessions are now available.
-                                        </p>
-                                        <p className="text-[11px] text-gray-400 mt-2">
-                                            Yesterday
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="p-4 hover:bg-gray-50 transition cursor-pointer">
-                                <div className="flex gap-4">
-                                    <div
-                                        className="
-                                            w-12
-                                            h-12
-                                            flex-shrink-0
-                                            flex
-                                            items-center
-                                            justify-center
-                                            bg-yellow-50
-                                            rounded-xl
-                                            text-xl
-                                        "
-                                    >
-                                        🏆
-                                    </div>
-                                    <div>
-                                        <h3 className="text-sm font-semibold text-gray-700">
-                                            Congratulations to our Top Performers!
-                                        </h3>
-                                        <p className="text-xs text-gray-400 mt-1">
-                                            Celebrating our outstanding employees.
-                                        </p>
-                                        <p className="text-[11px] text-gray-400 mt-2">
-                                            3 days ago
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div className="p-4">
-                            <button
-                                type="button"
-                                className="
-                                    text-sm
-                                    font-semibold
-                                    text-indigo-600
-                                    hover:text-indigo-700
-                                "
-                            >
-                                View all news →
-                            </button>
-                        </div>
-                    </div>
-                    <div
-                        className="
-                            bg-gradient-to-br
-                            from-indigo-600
-                            to-blue-700
-                            rounded-2xl
                             shadow-sm
                             p-6
-                            text-white
+                            bg-gradient-to-r
+                            from-indigo-50
+                            to-white
                         "
                     >
                         <div className="flex items-center gap-3 mb-4">
+
                             <div
                                 className="
                                     w-11
@@ -763,65 +866,196 @@ const Dashboard = () => {
                                     flex
                                     items-center
                                     justify-center
-                                    bg-white/15
+                                    bg-indigo-100
                                     rounded-xl
                                     text-xl
                                 "
                             >
-                                💡
+                                🔔
                             </div>
+
                             <div>
-                                <h2 className="font-bold text-lg">
-                                    Suggestion Box
+                                <h2 className="text-base font-bold text-gray-800">
+                                    Notifications
                                 </h2>
-                                <p className="text-xs text-blue-100">
-                                    Help us improve
+
+                                <p className="text-xs text-gray-500 mt-0.5">
+                                    View all alerts, announcements, and news
                                 </p>
                             </div>
+
                         </div>
-                        <p className="text-sm text-blue-50 mb-5">
-                            Have an idea, suggestion, or improvement
-                            you'd like to share? Let us know.
+
+                        <p className="text-sm text-gray-500 leading-relaxed mb-5">
+                            Stay updated with the latest announcements, alerts,
+                            and organization news.
                         </p>
-                        <textarea
-                            rows="5"
-                            placeholder="Share your suggestion..."
+
+                        <Link
+                            to="/notification-management"
                             className="
+                                inline-flex
+                                items-center
+                                justify-center
+                                gap-2
                                 w-full
                                 px-4
-                                py-3
+                                py-2.5
                                 text-sm
-                                text-gray-700
-                                bg-white
-                                border
-                                border-transparent
-                                rounded-xl
-                                outline-none
-                                resize-none
-                                focus:ring-2
-                                focus:ring-white/50
+                                font-semibold
+                                text-white
+                                bg-indigo-600
+                                rounded-lg
+                                hover:bg-indigo-700
+                                transition
                             "
-                        />
-                        <div className="flex justify-end mt-4">
-                            <button
-                                type="button"
-                                className="
-                                    px-5
-                                    py-2.5
-                                    text-sm
-                                    font-semibold
-                                    text-blue-700
-                                    bg-white
-                                    rounded-lg
-                                    hover:bg-blue-50
-                                    transition
-                                "
-                            >
-                                Submit Suggestion
-                            </button>
-                        </div>
+                        >
+                            View All Notifications
+                            <span>→</span>
+                        </Link>
                     </div>
-                </div> */}
+
+
+                    {/* =====================================================
+                        SUGGESTION BOX - COLLAPSIBLE
+                    ====================================================== */}
+
+                    <div
+                        className="
+                            bg-gradient-to-br
+                            from-indigo-600
+                            to-blue-700
+                            rounded-2xl
+                            shadow-sm
+                            text-white
+                            overflow-hidden
+                        "
+                    >
+
+                        {/* Suggestion Box Header */}
+                        <button
+                            type="button"
+                            onClick={() => setShowSuggestionBox(!showSuggestionBox)}
+                            className="
+                                w-full
+                                flex
+                                items-center
+                                justify-between
+                                p-6
+                                text-left
+                                hover:bg-white/5
+                                transition
+                            "
+                        >
+                            <div className="flex items-center gap-3">
+
+                                <div
+                                    className="
+                                        w-11
+                                        h-11
+                                        flex
+                                        items-center
+                                        justify-center
+                                        bg-white/15
+                                        rounded-xl
+                                        text-xl
+                                    "
+                                >
+                                    💡
+                                </div>
+
+                                <div>
+                                    <h2 className="font-bold text-lg">
+                                        Suggestion Box
+                                    </h2>
+
+                                    <p className="text-xs text-blue-100">
+                                        Help us improve
+                                    </p>
+                                </div>
+
+                            </div>
+
+                            {/* Collapse Icon */}
+                            <span
+                                className={`
+                                    text-xl
+                                    transition-transform
+                                    duration-200
+                                    ${showSuggestionBox ? "rotate-180" : ""}
+                                `}
+                            >
+                                ▼
+                            </span>
+
+                        </button>
+
+
+                        {/* Collapsible Content */}
+                        {showSuggestionBox && (
+                            <div className="px-6 pb-6">
+
+                                <div className="border-t border-white/20 pt-5">
+
+                                    <p className="text-sm text-blue-50 mb-5">
+                                        Have an idea, suggestion, or improvement
+                                        you'd like to share? Let us know.
+                                    </p>
+
+                                    <textarea
+                                        rows="5"
+                                        value={message}
+                                        onChange={(e) => setMessage(e.target.value)}
+                                        placeholder="Share your suggestion..."
+                                        className="
+                                            w-full
+                                            px-4
+                                            py-3
+                                            text-sm
+                                            text-gray-700
+                                            bg-white
+                                            border
+                                            border-transparent
+                                            rounded-xl
+                                            outline-none
+                                            resize-none
+                                            focus:ring-2
+                                            focus:ring-white/50
+                                        "
+                                    />
+
+                                    <div className="flex justify-end mt-4">
+
+                                        <button
+                                            type="button"
+                                            className="
+                                                px-5
+                                                py-2.5
+                                                text-sm
+                                                font-semibold
+                                                text-blue-700
+                                                bg-white
+                                                rounded-lg
+                                                hover:bg-blue-50
+                                                transition
+                                            "
+                                            onClick={handleSubmitSuggestion}
+                                        >
+                                            Submit Suggestion
+                                        </button>
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+                        )}
+
+                    </div>
+
+                    </div>
+                </div>
+                
             </div>
         </div>
     );

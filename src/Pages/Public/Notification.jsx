@@ -1,8 +1,12 @@
 
-import React, { useState } from "react";
-import { BookmarkIcon } from '@heroicons/react/24/outline'
-import { PostNotification } from '../../Api/Module/DashboardApi.jsx';
+import React, { useState, useEffect } from "react";
+import { BookmarkIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline'
+import { PostNotification, GetAllNotifications, DeleteNotification } from '../../Api/Module/DashboardApi.jsx';
 import { toast } from 'react-toastify';
+import Table from '../../Component/Table.jsx';
+import Swal from 'sweetalert2';
+import withReactContent from 'sweetalert2-react-content';
+import { useUser } from "../Auth/UserContext";
 
 const Section = ({
     id,
@@ -64,20 +68,26 @@ const Section = ({
 };
 
 const Notification = () => {
+    const { user } = useUser();
+    const MySwal = withReactContent(Swal);
+    const canManageNotifications = ["RTA", "SCHEDULER", "RA", "ADMIN"].includes(
+        user?.permission
+    );
     const [openSections, setOpenSections] = useState({
         content: true,
         settings: true,
         schedule: false,
         targeting: false,
     });
-
+    const [notifications, setNotifications] = useState([]);
     const [form, setForm] = useState({
+        id: null,
         type: "announcement",
         title: "",
         content: "",
         priority: "normal",
         status: "draft",
-        link: "",
+        links: "",
         publish_at: "",
         expires_at: "",
     });
@@ -111,11 +121,8 @@ const Notification = () => {
 
             console.log(response);
 
-            // await fetchData();
+            await fetchNotifications();
             clearForm();
-            // setShowFaqForm(false);
-            // setExpandedFaq(null);
-
             toast.success(response.data.message);
 
         } catch (error) {
@@ -131,53 +138,161 @@ const Notification = () => {
 
     const clearForm = () => {
         setForm({
+            id: null,
             type: "announcement",
             title: "",
             content: "",
             priority: "normal",
             status: "draft",
-            link: "",
+            links: "",
             publish_at: "",
             expires_at: "",
         });
     }
+
+    const cols = [
+        { header: "Action", accessor: "action",
+            renderCell: (_, row) => (
+                <div className="flex gap-2">
+                    {/* Edit Button */}
+                        <button
+                            onClick={() => {
+                                console.log('Edit Link ID:', row);
+                                setForm({
+                                    id: row.id,
+                                    type: row.type,
+                                    title: row.title,
+                                    content: row.content,
+                                    priority: row.priority,
+                                    status: row.status,
+                                    links: row.links,
+                                    publish_at: row.publish_at,
+                                    expires_at: row.expires_at,
+                                });
+                            }}
+                            className="px-2 py-1 text-xs bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
+                        >
+                            <PencilIcon className="h-5 w-5" />
+                        </button>
+                    
+                    {/* Delete Button */}
+                    
+                        <button
+                            onClick={() => handleDelete(row.id)} // 🔥 call a delete handler
+                            className="px-2 py-1 text-xs bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors"
+                        >
+                            <TrashIcon className="h-5 w-5" />
+                        </button>
+                    
+                </div>
+            )
+        },
+        { header: "Type", accessor: "type", renderCell: ( value ) => value?.toUpperCase() },
+        { header: "Title", accessor: "title" },
+        { header: "Content", accessor: "content" },
+        { header: "Priority", accessor: "priority", renderCell: ( value ) => value?.toUpperCase() },
+        { header: "Status", accessor: "status", renderCell: ( value ) => value?.toUpperCase() },
+        { header: "Link", accessor: "links" },
+        { header: "Publish At", accessor: "publish_at" },
+        { header: "Expires At", accessor: "expires_at" },
+        { header: "Created By", accessor: "created_by" },
+        { header: "Updated By", accessor: "updated_by" },
+    ];
+
+    const handleDelete = async (id) => {
+        try {
+            MySwal.fire({
+                title: "Are you sure?",
+                text: "This action cannot be undone!",
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonColor: "#d33",
+                cancelButtonColor: "#3085d6",
+                confirmButtonText: "Yes, delete it!",
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                    try {
+                        const response = await DeleteNotification({ id }); // your API call
+                        toast.success(response.data.message);
+                        await fetchNotifications(); // refresh table
+                    } catch (error) {
+                        toast.error(error.response?.data?.message ?? "Failed to delete notification.");
+                    }
+                }
+            });
+        } catch (error) {
+            console.error('Error deleting item:', error);
+            toast.error(
+                error.response?.data?.errors?.message?.[0] ??
+                error.response?.data?.message ??
+                'Failed to delete notification.'
+            );
+        }
+    }
+
+    const fetchNotifications = async () => {
+        try {
+            const response = await GetAllNotifications();
+
+            console.log('FULL RESPONSE:', response);
+            console.log('RESPONSE DATA:', response.data);
+
+            const data = Array.isArray(response.data?.[0])
+                ? response.data[0]
+                : [];
+
+            console.log('NOTIFICATIONS:', data);
+
+            setNotifications(data);
+
+        } catch (error) {
+            console.error('Error fetching notification data:', error);
+            setNotifications([]);
+        }
+    };
       
+    useEffect(() => {
+        fetchNotifications();
+    }, []);
 
     return (
         <div className="mx-auto">
             {/* Header */}
-            <div className="mb-6">
-                <div className="flex items-center gap-3">
-                    <div className="w-11 h-11 rounded-xl bg-gray-900 flex items-center justify-center">
-                        <svg
-                            className="w-6 h-6 text-white"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                        >
-                            <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth="2"
-                                d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
-                            />
-                        </svg>
-                    </div>
+            {["RTA", "SCHEDULER", "RA", "ADMIN"].includes(user?.permission) && (
+                <div className="mb-6">
+                    <div className="flex items-center gap-3">
+                        <div className="w-11 h-11 rounded-xl bg-gray-900 flex items-center justify-center">
+                            <svg
+                                className="w-6 h-6 text-white"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth="2"
+                                    d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+                                />
+                            </svg>
+                        </div>
 
-                    <div>
-                        <h1 className="text-xl font-bold text-gray-800">
-                            Create Notification
-                        </h1>
+                        <div>
+                            <h1 className="text-xl font-bold text-gray-800">
+                                Create Notification
+                            </h1>
 
-                        <p className="text-sm text-gray-500">
-                            Create an announcement, alert, or news feed post.
-                        </p>
+                            <p className="text-sm text-gray-500">
+                                Create an announcement, alert, or news feed post.
+                            </p>
+                        </div>
                     </div>
                 </div>
-            </div>
+            )}
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Left side: Form */}
+                {canManageNotifications && (
                 <div className="space-y-4 h-[600px] overflow-y-auto">
                     {/* Content */}
                     <Section
@@ -195,7 +310,7 @@ const Notification = () => {
                                     Notification Type
                                 </label>
 
-                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                                     {[
                                         {
                                             value: "announcement",
@@ -230,11 +345,11 @@ const Notification = () => {
                                                 className="sr-only"
                                             />
 
-                                            <div className="font-medium text-sm text-gray-800">
+                                            <div className="font-medium text-sm text-gray-800 text-center whitespace-normal">
                                                 {item.label}
                                             </div>
 
-                                            <div className="text-xs text-gray-500 mt-1">
+                                            <div className="text-xs text-gray-500 mt-1 text-center whitespace-normal">
                                                 {item.description}
                                             </div>
                                         </label>
@@ -282,8 +397,8 @@ const Notification = () => {
 
                                 <input
                                     type="url"
-                                    name="link"
-                                    value={form.link}
+                                    name="links"
+                                    value={form.links}
                                     onChange={handleChange}
                                     placeholder="https://..."
                                     className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none"
@@ -389,6 +504,7 @@ const Notification = () => {
                     <div className="flex items-center justify-end gap-3">
                         <button
                             type="button"
+                            onClick={clearForm}
                             className="inline-flex items-center justify-center px-5 py-2.5 rounded-xl border border-gray-300 bg-white text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2 active:scale-[0.98] transition-all duration-200"
                         >
                             Cancel
@@ -404,10 +520,21 @@ const Notification = () => {
                         </button>
                     </div>
                 </div>
+                )}
 
                 {/* Right side: Table */}
-                <div className="lg:col-span-2">
-                    Table
+                <div
+                    className={`w-full min-w-0 ${
+                        canManageNotifications ? "lg:col-span-2" : "lg:col-span-3"
+                    }`}
+                >
+                    <Table
+                        title="Notifications"
+                        columns={cols}
+                        data={notifications}
+                        tableClassName="w-full min-w-full"
+                        cellClassName="text-xs whitespace-normal break-words"
+                    />
                 </div>
             </div>
         </div>

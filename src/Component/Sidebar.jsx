@@ -6,6 +6,7 @@ import {
 	XMarkIcon,
 	HomeIcon,
 	ChartBarIcon,
+	BellIcon,
 	UserGroupIcon,
 	ClipboardDocumentCheckIcon,
 	ArrowTrendingDownIcon, 
@@ -79,6 +80,13 @@ export const Sidebar = ({open, setOpen}) =>{
 						{open && "Policy File"}
 					</Link>
 				)} 
+				<Link
+					to="/notification-management"
+					className="flex items-center gap-3 p-2 rounded-lg hover:bg-white/10 hover:text-white transition"
+				>
+					<BellIcon className="h-5 w-5" />
+					{open && "Notifications"}
+				</Link>
 				{["ADMIN","VP","FINANCE CONTROLLER","RA", "CHIEF OF STAFF"].includes(user?.permission) && (
 					<div>
 						<button
@@ -213,10 +221,10 @@ export const Sidebar = ({open, setOpen}) =>{
 								User
 							</Link>
 							<Link
-							to="/notification-management"
+							to="/suggestion-management"
 							className="block p-1 text-sm hover:underline"
 							>
-								Notification
+								Suggestion Box
 							</Link>
 						</div>
 						)}

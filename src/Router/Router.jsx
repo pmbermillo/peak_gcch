@@ -22,6 +22,7 @@ import PolicyFile from '../Pages/Public/PolicyFile.jsx'
 import Faq from '../Pages/Public/Faq.jsx'
 import LinkOthers from '../Pages/Public/LinkOthers.jsx'
 import Notification from '../Pages/Public/Notification.jsx'
+import SuggestionBox from '../Pages/Public/SuggestionBox.jsx'
 
 const Router = () => {
   return (
@@ -160,6 +161,13 @@ const Router = () => {
                     element={
                         <ProtectedRoute>
                             <Notification />
+                        </ProtectedRoute>
+                }/>
+                <Route 
+                    path="suggestion-management" 
+                    element={
+                        <ProtectedRoute>
+                            <SuggestionBox />
                         </ProtectedRoute>
                 }/>
             </Route>

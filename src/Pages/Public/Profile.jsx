@@ -31,7 +31,7 @@ const Profile = () => {
             return;
         }
 
-        setMessage("Password reset request submitted!");
+        setMessage("Password changed successfully!");
     };
 
     return (

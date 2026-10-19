@@ -80,8 +80,19 @@ const Table = ({ title, columns, data, pageSizeOptions = [5, 10, 20], filtersMan
                 />
             </div>
 
-            <div className="overflow-y-auto max-h-[500px] shadow-md rounded-2xl">
-                <table className={`min-w-max border-collapse ${tableClassName} text-sm text-center relative`}>
+            <div className="overflow-x-auto overflow-y-auto max-h-[500px] shadow-md rounded-2xl">
+                <table
+                    className={`
+                        w-full
+                        min-w-full
+                        table-auto
+                        border-collapse
+                        ${tableClassName}
+                        text-sm
+                        text-center
+                        relative
+                    `}
+                >
                     <thead className={`bg-gray-100 ${headerClassName}`}>
                         {/* First row: month headers */}
                         <tr>
@@ -116,24 +127,26 @@ const Table = ({ title, columns, data, pageSizeOptions = [5, 10, 20], filtersMan
                                 <th
                                     key={col.accessor}
                                     className={`px-4 py-3 font-semibold text-gray-700 border border-gray-300 ${
-                                    isSticky ? "sticky left-0 bg-gray-100 z-10" : ""
+                                        isSticky ? "sticky left-0 bg-gray-100 z-10" : ""
                                     }`}
                                     style={{
-                                    minWidth: "120px",
-                                    left: isSticky ? `${leftValue}px` : undefined,
+                                        left: isSticky ? `${leftValue}px` : undefined,
+                                        // maxWidth: "200px",
+                                        minWidth: "150px",
                                     }}
                                 >
-                                    <div className="flex flex-col">
-                                    <span>{col.header}</span>
-                                    <input
-                                        type="text"
-                                        placeholder={`Filter ${col.header}`}
-                                        value={filters[col.accessor] || ""}
-                                        onChange={(e) =>
-                                        handleFilterChange(col.accessor, e.target.value)
-                                        }
-                                        className="mt-1 p-1 border border-gray-300 rounded-md text-xs focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                                    />
+                                    <div className="min-w-0 whitespace-normal break-words [overflow-wrap:anywhere]">
+                                        <span>{col.header}</span>
+
+                                        <input
+                                            type="text"
+                                            placeholder={`Filter ${col.header}`}
+                                            value={filters[col.accessor] || ""}
+                                            onChange={(e) =>
+                                                handleFilterChange(col.accessor, e.target.value)
+                                            }
+                                            className="mt-1 w-full min-w-0 p-1 border border-gray-300 rounded-md text-xs focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                        />
                                     </div>
                                 </th>
                                 );
@@ -155,17 +168,20 @@ const Table = ({ title, columns, data, pageSizeOptions = [5, 10, 20], filtersMan
                                     return (
                                     <td
                                         key={col?.accessor || `cell-${rowIndex}-${colIndex}`}
-                                        className={`px-4 py-3 text-gray-700 border border-gray-300 ${
+                                        className={`px-4 py-3 text-gray-700 border border-gray-300 align-middle ${
                                             isSticky ? "sticky bg-white z-0" : ""
                                         } ${cellClassName}`}
                                         style={{
-                                        minWidth: "120px",
-                                        left: isSticky ? `${leftValue}px` : undefined,
+                                            left: isSticky ? `${leftValue}px` : undefined,
+                                            // maxWidth: "250px",
+                                            minWidth: "150px",
                                         }}
                                     >
-                                        {col?.renderCell
-                                        ? col.renderCell(row[col?.accessor], row, col?.accessor)
-                                        : row[col?.accessor] ?? "-"}
+                                        <div className="min-w-0 whitespace-normal break-words [overflow-wrap:anywhere]">
+                                            {col?.renderCell
+                                                ? col.renderCell(row[col?.accessor], row, col?.accessor)
+                                                : row[col?.accessor] ?? "-"}
+                                        </div>
                                     </td>
                                     );
                                 });
